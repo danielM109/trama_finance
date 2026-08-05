@@ -18,7 +18,7 @@ export const AccountsView: React.FC = () => {
   // Budget calculations
   const totalEstimatedExpense = budgets.reduce((sum, b) => sum + b.estimatedAmount, 0);
   const totalActualExpense = transactions
-    .filter(t => t.type === 'gasto')
+    .filter(t => t.type === 'Gasto')
     .reduce((sum, t) => sum + t.amount, 0);
 
   const budgetPct = Math.min(100, Math.round((totalActualExpense / (totalEstimatedExpense || 1)) * 100));

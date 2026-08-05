@@ -17,7 +17,7 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('Sin Pago');
   const [amountPaid, setAmountPaid] = useState('');
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus>('En Proceso');
-  const [serviceDate, setServiceDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [nextDate, setNextDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   if (!isOpen) return null;
 
@@ -38,7 +38,8 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
       paymentStatus,
       amountPaid: paidNum,
       serviceStatus,
-      serviceDate
+      nextDate,
+      archived: false
     });
 
     // Reset
@@ -142,8 +143,8 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
             <label className="input-label">Fecha del Servicio</label>
             <input
               type="date"
-              value={serviceDate}
-              onChange={e => setServiceDate(e.target.value)}
+              value={nextDate}
+              onChange={e => setNextDate(e.target.value)}
               className="std-input"
               required
             />

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { TrendingDown, TrendingUp, CircleDollarSign, Clock, ArrowRight, Filter } from 'lucide-react';
+import { TrendingDown, TrendingUp, CircleDollarSign, Clock, ArrowRight } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 export const DashboardView: React.FC = () => {

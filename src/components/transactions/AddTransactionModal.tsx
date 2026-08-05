@@ -40,7 +40,6 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
       return;
     }
 
-    const d = new Date(date);
     const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     const [year, month] = date.split('-').map(Number);
 
