@@ -42,7 +42,7 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [
 
 export const INITIAL_SERVICES: ClientService[] = [
   {
-    id: 's1',
+    id: 1,
     clientName: 'Natalia Perro Pedro',
     packageContracted: 'Trama Completa',
     agreedPrice: 0,
@@ -54,7 +54,7 @@ export const INITIAL_SERVICES: ClientService[] = [
     archived: false
   }
   // {
-  //   id: 's2',
+  //   id: 2,
   //   clientName: 'María José Silva',
   //   packageContracted: 'Diseño Base & Asesoría',
   //   agreedPrice: 85000,
@@ -66,7 +66,7 @@ export const INITIAL_SERVICES: ClientService[] = [
   //   archived: false
   // },
   // {
-  //   id: 's3',
+  //   id: 3,
   //   clientName: 'Catalina Merino',
   //   packageContracted: 'Diseño Base & Asesoría',
   //   agreedPrice: 95000,

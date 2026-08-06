@@ -1,7 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Transaction, Account, ClientService, CategoryBudget, ActiveTab } from '../types';
 import { INITIAL_ACCOUNTS, INITIAL_SERVICES, INITIAL_BUDGETS } from '../data/initialData';
-import {getTransactions, createTransaction, deleteTransaction as removeTransaction} from "../components/services/transactionService";
+import { getTransactions, createTransaction, deleteTransaction as removeTransaction } from '../components/services/transactionService';
+import {
+  getServices,
+  createService,
+  updateService as updateServiceRecord,
+  deleteService as removeService
+} from '../components/services/clientService';
 
 interface FinanceContextType {
   transactions: Transaction[];
@@ -16,8 +22,8 @@ interface FinanceContextType {
   addTransaction: (tx: Omit<Transaction, 'id'>) => void;
   deleteTransaction: (id: string) => void;
   addService: (service: Omit<ClientService, 'id'>) => void;
-  updateService: (id: string, updated: Partial<ClientService>) => void;
-  deleteService: (id: string) => void;
+  updateService: (id: string | number, updated: Partial<ClientService>) => void;
+  deleteService: (id: string | number) => void;
   addAccount: (acc: Omit<Account, 'id'>) => void;
   updateAccountBalance: (id: string, newBalance: number) => void;
   resetToInitialData: () => void;
@@ -94,18 +100,28 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return amount < 0 ? `-${formatted}` : formatted;
   };
 
-  const loadTransactions = async ()=>{
-      try{
-          const data = await getTransactions();
-          setTransactions(data);
-      }catch(err){
-          console.error(err);
-      }
+  const loadTransactions = async () => {
+    try {
+      const data = await getTransactions();
+      setTransactions(data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  useEffect(()=>{
-      loadTransactions();
-  },[]);
+  const loadServices = async () => {
+    try {
+      const data = await getServices();
+      setServices(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    loadTransactions();
+    loadServices();
+  }, []);
 
   const addTransaction = async (
       tx: Omit<Transaction,"id">
@@ -193,22 +209,40 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   //   }
   // };
 
-  const addService = (serviceData: Omit<ClientService, 'id'>) => {
-    const newService: ClientService = {
-      ...serviceData,
-      id: `srv_${Date.now()}`
-    };
-    setServices(prev => [newService, ...prev]);
+  const addService = async (serviceData: Omit<ClientService, 'id'>) => {
+    try {
+      const created = await createService(serviceData);
+      if (created.length > 0) {
+        setServices(prev => [created[0], ...prev]);
+      } else {
+        await loadServices();
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const updateService = (id: string, updated: Partial<ClientService>) => {
-    setServices(prev =>
-      prev.map(srv => (srv.id === id ? { ...srv, ...updated } : srv))
-    );
+  const updateService = async (id: string | number, updated: Partial<ClientService>) => {
+    try {
+      const updatedItems = await updateServiceRecord(id, updated);
+      if (updatedItems.length > 0) {
+        const updatedItem = updatedItems[0];
+        setServices(prev => prev.map(srv => (srv.id === id || srv.id === updatedItem.id ? { ...srv, ...updatedItem } : srv)));
+      } else {
+        await loadServices();
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const deleteService = (id: string) => {
-    setServices(prev => prev.filter(srv => srv.id !== id));
+  const deleteService = async (id: string | number) => {
+    try {
+      await removeService(id);
+      setServices(prev => prev.filter(srv => srv.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const addAccount = (accData: Omit<Account, 'id'>) => {

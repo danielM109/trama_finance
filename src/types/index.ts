@@ -24,7 +24,7 @@ export type PaymentStatus = 'Sin Pago' | 'Abono' | 'Pagado';
 export type ServiceStatus = 'En Proceso' | 'Por Empezar' | 'Completado' | 'Cancelado';
 
 export interface ClientService {
-  id: string;
+  id: number;
   clientName: string;
   packageContracted: string;
   agreedPrice: number;
