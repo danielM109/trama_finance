@@ -1,18 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Transaction, Account, ClientService, CategoryBudget, ActiveTab } from '../types';
-import { INITIAL_ACCOUNTS, INITIAL_SERVICES, INITIAL_BUDGETS } from '../data/initialData';
+import { INITIAL_ACCOUNTS, INITIAL_BUDGETS } from '../data/initialData';
 import { getTransactions, createTransaction, deleteTransaction as removeTransaction } from '../components/services/transactionService';
 import {
-  getServices,
-  createService,
-  updateService as updateServiceRecord,
-  deleteService as removeService
+  getClients,
+  createClient,
+  updateClient as updateClientRecord,
+  deleteClient as removeClient
 } from '../components/services/clientService';
 
 interface FinanceContextType {
   transactions: Transaction[];
   accounts: Account[];
-  services: ClientService[];
+  clients: ClientService[];
   budgets: CategoryBudget[];
   categories: string[];
   activeTab: ActiveTab;
@@ -21,9 +21,9 @@ interface FinanceContextType {
   deleteCategory: (category: string) => void;
   addTransaction: (tx: Omit<Transaction, 'id'>) => void;
   deleteTransaction: (id: string) => void;
-  addService: (service: Omit<ClientService, 'id'>) => void;
-  updateService: (id: string | number, updated: Partial<ClientService>) => void;
-  deleteService: (id: string | number) => void;
+  addClient: (client: Omit<ClientService, 'id'>) => void;
+  updateClient: (id: number, updated: Partial<ClientService>) => void;
+  deleteClient: (id: number) => void;
   addAccount: (acc: Omit<Account, 'id'>) => void;
   updateAccountBalance: (id: string, newBalance: number) => void;
   resetToInitialData: () => void;
@@ -55,10 +55,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return saved ? JSON.parse(saved) : INITIAL_ACCOUNTS;
   });
 
-  const [services, setServices] = useState<ClientService[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.SERVICES);
-    return saved ? JSON.parse(saved) : INITIAL_SERVICES;
-  });
+  const [clients, setClients] = useState<ClientService[]>([]);
+  
+  // const [services, setServices] = useState<ClientService[]>(() => {
+  //   const saved = localStorage.getItem(STORAGE_KEYS.SERVICES);
+  //   return saved ? JSON.parse(saved) : INITIAL_SERVICES;
+  // });
 
   const [budgets] = useState<CategoryBudget[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.BUDGETS);
@@ -82,9 +84,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(accounts));
   }, [accounts]);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(services));
-  }, [services]);
+  // useEffect(() => {
+  //   localStorage.setItem(STORAGE_KEYS.SERVICES, JSON.stringify(services));
+  // }, [services]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
@@ -109,10 +111,10 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const loadServices = async () => {
+  const loadClients = async () => {
     try {
-      const data = await getServices();
-      setServices(data);
+      const data = await getClients();
+      setClients(data);
     } catch (err) {
       console.error(err);
     }
@@ -120,7 +122,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   useEffect(() => {
     loadTransactions();
-    loadServices();
+    loadClients();
   }, []);
 
   const addTransaction = async (
@@ -209,37 +211,37 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   //   }
   // };
 
-  const addService = async (serviceData: Omit<ClientService, 'id'>) => {
+  const addClient = async (cli: Omit<ClientService, 'id'>) => {
     try {
-      const created = await createService(serviceData);
+      const created = await createClient(cli);
       if (created.length > 0) {
-        setServices(prev => [created[0], ...prev]);
+        setClients(prev => [created[0], ...prev]);
       } else {
-        await loadServices();
+        await loadClients();
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  const updateService = async (id: string | number, updated: Partial<ClientService>) => {
+  const updateClient = async (id: number, updated: Partial<ClientService>) => {
     try {
-      const updatedItems = await updateServiceRecord(id, updated);
+      const updatedItems = await updateClientRecord(id, updated);
       if (updatedItems.length > 0) {
         const updatedItem = updatedItems[0];
-        setServices(prev => prev.map(srv => (srv.id === id || srv.id === updatedItem.id ? { ...srv, ...updatedItem } : srv)));
+        setClients(prev => prev.map(cli => (cli.id === id || cli.id === updatedItem.id ? { ...cli, ...updatedItem } : cli)));
       } else {
-        await loadServices();
+        await loadClients();
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  const deleteService = async (id: string | number) => {
+  const deleteClient = async (id: number) => {
     try {
-      await removeService(id);
-      setServices(prev => prev.filter(srv => srv.id !== id));
+      await removeClient(id);
+      setClients(prev => prev.filter(cli => cli.id !== id));
     } catch (err) {
       console.error(err);
     }
@@ -274,7 +276,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (window.confirm('¿Deseas restablecer todos los datos a la versión inicial de ejemplo?')) {
       // setTransactions(INITIAL_TRANSACTIONS);
       setAccounts(INITIAL_ACCOUNTS);
-      setServices(INITIAL_SERVICES);
+      // setServices(INITIAL_SERVICES);
       localStorage.clear();
     }
   };
@@ -284,7 +286,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       value={{
         transactions,
         accounts,
-        services,
+        clients,
         budgets,
         categories,
         activeTab,
@@ -293,9 +295,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         deleteCategory,
         addTransaction,
         deleteTransaction,
-        addService,
-        updateService,
-        deleteService,
+        addClient,
+        updateClient,
+        deleteClient,
         addAccount,
         updateAccountBalance,
         resetToInitialData,

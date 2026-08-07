@@ -39,7 +39,7 @@ function resolveId(id: string | number) {
   return Number.isNaN(numericId) ? id : numericId;
 }
 
-export async function getServices() {
+export async function getClients() {
   const { data, error } = await supabase
     .from(TABLE_NAME)
     .select('*')
@@ -50,7 +50,7 @@ export async function getServices() {
   return (data ?? []).map(toServiceModel);
 }
 
-export async function createService(service: Omit<ClientService, 'id'>) {
+export async function createClient(service: Omit<ClientService, 'id'>) {
   const payload = toPayload(service);
 
   const { data, error } = await supabase
@@ -63,7 +63,7 @@ export async function createService(service: Omit<ClientService, 'id'>) {
   return (data ?? []).map(toServiceModel);
 }
 
-export async function updateService(id: string | number, updates: Partial<ClientService>) {
+export async function updateClient(id:number, updates: Partial<ClientService>) {
   const payload = toPayload(updates);
 
   const { data, error } = await supabase
@@ -77,7 +77,7 @@ export async function updateService(id: string | number, updates: Partial<Client
   return (data ?? []).map(toServiceModel);
 }
 
-export async function deleteService(id: string | number) {
+export async function deleteClient(id: number) {
   const { error } = await supabase
     .from(TABLE_NAME)
     .delete()

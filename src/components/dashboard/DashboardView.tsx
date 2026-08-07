@@ -4,7 +4,7 @@ import { TrendingDown, TrendingUp, CircleDollarSign, Clock, ArrowRight } from 'l
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 export const DashboardView: React.FC = () => {
-  const { transactions, services, formatCurrency, setActiveTab } = useFinance();
+  const { transactions, clients, formatCurrency, setActiveTab } = useFinance();
 
   const [filterPeriod, setFilterPeriod] = useState<'all' | 'year' | 'month'>('month');
   
@@ -35,10 +35,10 @@ export const DashboardView: React.FC = () => {
     
   const netPeriodBalance = totalIncome - totalExpense;
 
-  // Pending Receivables from Services
-  const pendingReceivables = services.reduce((sum, s) => {
-    const paid = s.amountPaid || (s.paymentStatus === 'Pagado' ? s.agreedPrice : 0);
-    return sum + Math.max(0, s.agreedPrice - paid);
+  // Pending Receivables from Clients
+  const pendingReceivables = clients.reduce((sum, client) => {
+    const paid = client.amountPaid || (client.paymentStatus === 'Pagado' ? client.agreedPrice : 0);
+    return sum + Math.max(0, client.agreedPrice - paid);
   }, 0);
 
   // Group Expenses by Category for Chart
@@ -131,7 +131,7 @@ export const DashboardView: React.FC = () => {
             </div>
             <div>
               <h4 className="pr-title">Cuentas por Cobrar (Clientas)</h4>
-              <p className="pr-sub">Tienes servicios pendientes por cobrar</p>
+              <p className="pr-sub">Tienes clientes con pagos pendientes</p>
             </div>
           </div>
           <div className="pr-amount">

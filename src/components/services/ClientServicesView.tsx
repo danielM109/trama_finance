@@ -5,13 +5,13 @@ import { AddServiceModal } from './AddServiceModal';
 import { PaymentStatus, ServiceStatus } from '../../types';
 
 export const ClientServicesView: React.FC = () => {
-  const { services, updateService, deleteService, formatCurrency } = useFinance();
+  const { clients, updateClient, deleteClient, formatCurrency } = useFinance();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const totalAgreed = services.reduce((sum, s) => sum + s.agreedPrice, 0);
-  const totalCollected = services.reduce((sum, s) => {
-    if (s.paymentStatus === 'Pagado') return sum + s.agreedPrice;
-    return sum + (s.amountPaid || 0);
+  const totalAgreed = clients.reduce((sum, client) => sum + client.agreedPrice, 0);
+  const totalCollected = clients.reduce((sum, client) => {
+    if (client.paymentStatus === 'Pagado') return sum + client.agreedPrice;
+    return sum + (client.amountPaid || 0);
   }, 0);
   const totalPending = totalAgreed - totalCollected;
 
@@ -27,11 +27,11 @@ export const ClientServicesView: React.FC = () => {
     "Pagado": 3,
   };
 
-  const visibleServices = services
-    .filter(service => !service.archived)
+  const visibleClients = clients
+    .filter(client => !client.archived)
     .sort((a, b) => {
       const dateCompare =
-        new Date(b.nextDate).getTime() - new Date(a.nextDate).getTime();
+        new Date(a.nextDate).getTime() - new Date(b.nextDate).getTime();
 
       if (dateCompare !== 0) return dateCompare;
 
@@ -80,7 +80,7 @@ export const ClientServicesView: React.FC = () => {
           <p className="page-subtitle">Seguimiento de trabajos y cobros</p>
         </div>
         <button className="add-btn-primary" onClick={() => setIsModalOpen(true)}>
-          <Plus size={16} /> Nueva Clienta
+          <Plus size={16} />Clienta
         </button>
       </div>
 
@@ -102,38 +102,38 @@ export const ClientServicesView: React.FC = () => {
 
       {/* Services List */}
       <div className="services-list">
-        {visibleServices.length > 0 ? (
-          visibleServices.map(srv => {
-            const paid = srv.paymentStatus === 'Pagado' ? srv.agreedPrice : (srv.amountPaid || 0);
-            const pending = Math.max(0, srv.agreedPrice - paid);
+        {visibleClients.length > 0 ? (
+          visibleClients.map(client => {
+            const paid = client.paymentStatus === 'Pagado' ? client.agreedPrice : (client.amountPaid || 0);
+            const pending = Math.max(0, client.agreedPrice - paid);
 
             return (
-              <div key={srv.id} className="srv-card glass-card">
+              <div key={client.id} className="srv-card glass-card">
                 <div className="srv-card-top">
                   <div className="client-meta">
                     <div className="client-avatar">
                       <Users size={18} color="#818CF8" />
                     </div>
                     <div>
-                      <h3 className="client-name">{srv.clientName}</h3>
-                      <p className="package-title">{srv.packageContracted}</p>
+                      <h3 className="client-name">{client.clientName}</h3>
+                      <p className="package-title">{client.packageContracted}</p>
                     </div>
                   </div>
 
                   <div className="srv-badges">
-                    {getServiceBadge(srv.serviceStatus)}
-                    {getPaymentBadge(srv.paymentStatus)}
+                    {getServiceBadge(client.serviceStatus)}
+                    {getPaymentBadge(client.paymentStatus)}
                   </div>
                 </div>
 
                 <div className="srv-details">
                   <div className="detail-item">
                     <DollarSign size={14} color="#94A3B8" />
-                    <span>Acordado: <strong>{formatCurrency(srv.agreedPrice)}</strong></span>
+                    <span>Acordado: <strong>{formatCurrency(client.agreedPrice)}</strong></span>
                   </div>
                   <div className="detail-item">
                     <Calendar size={14} color="#94A3B8" />
-                    <span>Próx. Cita: {srv.nextDate}</span>
+                    <span>Próx. Cita: {client.nextDate}</span>
                   </div>
                 </div>
 
@@ -149,19 +149,19 @@ export const ClientServicesView: React.FC = () => {
                   <span className="action-label">Cambiar pago:</span>
                   <div className="status-buttons">
                     <button
-                      className={`status-btn ${srv.paymentStatus === 'Sin Pago' ? 'active-sp' : ''}`}
-                      onClick={() => updateService(srv.id, { paymentStatus: 'Sin Pago', amountPaid: 0 })}
+                      className={`status-btn ${client.paymentStatus === 'Sin Pago' ? 'active-sp' : ''}`}
+                      onClick={() => updateClient(client.id, { paymentStatus: 'Sin Pago', amountPaid: 0 })}
                     >
                       Sin Pago
                     </button>
                     <button
-                      className={`status-btn ${srv.paymentStatus === 'Abono' ? 'active-ab' : ''}`}
+                      className={`status-btn ${client.paymentStatus === 'Abono' ? 'active-ab' : ''}`}
                       onClick={() => {
-                        const amountStr = prompt('Monto abonado hasta ahora ($):', String(srv.amountPaid || srv.agreedPrice / 2));
+                        const amountStr = prompt('Monto abonado hasta ahora ($):', String(client.amountPaid || client.agreedPrice / 2));
                         if (amountStr) {
                           const val = parseFloat(amountStr);
                           if (!isNaN(val)) {
-                            updateService(srv.id, { paymentStatus: 'Abono', amountPaid: val });
+                            updateClient(client.id, { paymentStatus: 'Abono', amountPaid: val });
                           }
                         }
                       }}
@@ -169,8 +169,8 @@ export const ClientServicesView: React.FC = () => {
                       Abono
                     </button>
                     <button
-                      className={`status-btn ${srv.paymentStatus === 'Pagado' ? 'active-pg' : ''}`}
-                      onClick={() => updateService(srv.id, { paymentStatus: 'Pagado', amountPaid: srv.agreedPrice })}
+                      className={`status-btn ${client.paymentStatus === 'Pagado' ? 'active-pg' : ''}`}
+                      onClick={() => updateClient(client.id, { paymentStatus: 'Pagado', amountPaid: client.agreedPrice })}
                     >
                       Pagado
                     </button>
@@ -179,8 +179,8 @@ export const ClientServicesView: React.FC = () => {
                   <button
                     className="srv-delete-btn"
                     onClick={() => {
-                      if (window.confirm(`¿Eliminar registro de ${srv.clientName}?`)) {
-                        deleteService(srv.id);
+                      if (window.confirm(`¿Eliminar registro de ${client.clientName}?`)) {
+                        deleteClient(client.id);
                       }
                     }}
                   >

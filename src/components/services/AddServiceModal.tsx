@@ -9,7 +9,7 @@ interface ModalProps {
 }
 
 export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
-  const { addService } = useFinance();
+  const { addClient } = useFinance();
 
   const [clientName, setClientName] = useState('');
   const [packageContracted, setPackageContracted] = useState('');
@@ -31,7 +31,7 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
 
     const paidNum = paymentStatus === 'Pagado' ? priceNum : parseFloat(amountPaid) || 0;
 
-    addService({
+    addClient({
       clientName: clientName.trim(),
       packageContracted: packageContracted.trim(),
       agreedPrice: priceNum,
@@ -159,10 +159,10 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
       <style>{`
         .modal-backdrop {
           position: fixed;
-          top: 0;
+          top: 3px;
           left: 0;
           right: 0;
-          bottom: 0;
+          // bottom: 0;
           background: rgba(0, 0, 0, 0.75);
           backdrop-filter: blur(8px);
           z-index: 100;
@@ -180,7 +180,7 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
         .modal-content {
           width: 100%;
           max-width: 480px;
-          border-bottom-left-radius: 0;
+          // border-bottom-left-radius: 0;
           border-bottom-right-radius: 0;
           background: #161E31;
           border: 1px solid rgba(255, 255, 255, 0.12);
