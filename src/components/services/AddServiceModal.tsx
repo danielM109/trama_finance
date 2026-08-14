@@ -26,12 +26,14 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose, clientT
   const [notes, setNotes] = useState('');
 
   const backdropRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (isOpen) {
+      // Lock background body scroll while modal is open
+      const originalStyle = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
       if (backdropRef.current) backdropRef.current.scrollTop = 0;
-      if (formRef.current) formRef.current.scrollTop = 0;
 
       if (clientToEdit) {
         setClientName(clientToEdit.clientName || '');
@@ -42,7 +44,7 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose, clientT
         setServiceStatus(clientToEdit.serviceStatus || 'En Proceso');
         setNextDate(clientToEdit.nextDate || new Date().toISOString().split('T')[0]);
         setHora(clientToEdit.hora || '');
-        setMinuto(clientToEdit.minuto || '');
+        setMinuto(clientToEdit.minuto || '00');
         setCiudad(clientToEdit.ciudad || '');
         setNotes(clientToEdit.notes || '');
       } else {
@@ -54,10 +56,14 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose, clientT
         setServiceStatus('En Proceso');
         setNextDate(new Date().toISOString().split('T')[0]);
         setHora('');
-        setMinuto('');
+        setMinuto('00');
         setCiudad('');
         setNotes('');
       }
+
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
     }
   }, [isOpen, clientToEdit]);
 
@@ -100,7 +106,7 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose, clientT
     setAgreedPrice('');
     setAmountPaid('');
     setHora('');
-    setMinuto('');
+    setMinuto('00');
     setCiudad('');
     setNotes('');
     onClose();
@@ -119,7 +125,7 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose, clientT
           </button>
         </div>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="modal-form">
+        <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-group">
             <label className="input-label">Nombre de la Clienta</label>
             <input
@@ -231,7 +237,7 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose, clientT
                 onChange={e => setMinuto(e.target.value)}
                 className="std-select flex-1"
               >
-                <option value="">00 min</option>
+                <option value="00">00 min</option>
                 {minutesOptions.map(m => (
                   <option key={m} value={m}>
                     {m} min
@@ -284,6 +290,7 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose, clientT
           bottom: 0;
           width: 100vw;
           height: 100vh;
+          height: 100dvh;
           background: rgba(11, 15, 25, 0.88);
           backdrop-filter: blur(14px);
           -webkit-backdrop-filter: blur(14px);
@@ -291,32 +298,36 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose, clientT
           display: flex;
           align-items: flex-start;
           justify-content: center;
-          padding: 16px;
+          padding: 12px 12px 80px 12px;
           overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
         }
 
         .modal-content {
           width: 100%;
           max-width: 480px;
-          max-height: calc(100vh - 32px);
-          margin: auto;
+          margin: 12px auto 40px auto;
           display: flex;
           flex-direction: column;
           background: #161E31;
           border: 1px solid rgba(255, 255, 255, 0.16);
           border-radius: 24px;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
-          overflow: hidden;
+          position: relative;
         }
 
         .modal-header {
+          position: sticky;
+          top: 0;
+          z-index: 10;
           display: flex;
           justify-content: space-between;
           align-items: center;
           padding: 18px 20px;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
           background: #161E31;
-          flex-shrink: 0;
+          border-top-left-radius: 24px;
+          border-top-right-radius: 24px;
         }
 
         .modal-title {
@@ -337,12 +348,11 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose, clientT
         }
 
         .modal-form {
-          flex: 1;
-          overflow-y: auto;
           padding: 20px;
           display: flex;
           flex-direction: column;
           gap: 16px;
+          padding-bottom: 32px;
         }
 
         .form-group {
@@ -378,20 +388,20 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose, clientT
           text-transform: none;
         }
 
-        .std-input, .std-select {
+        .std-input, .std-select, .std-textarea {
           background: rgba(30, 41, 59, 0.8);
           border: 1px solid rgba(255, 255, 255, 0.12);
           border-radius: 12px;
           padding: 12px 14px;
           color: #F8FAFC;
-          font-size: 0.88rem;
+          font-size: 16px; /* 16px prevents iOS Safari auto-zoom */
           outline: none;
           font-family: inherit;
         }
 
         .std-textarea {
           resize: vertical;
-          min-height: 60px;
+          min-height: 70px;
         }
 
         .std-select option {
@@ -400,14 +410,14 @@ export const AddServiceModal: React.FC<ModalProps> = ({ isOpen, onClose, clientT
         }
 
         .submit-btn {
-          margin-top: 8px;
+          margin-top: 12px;
           background: var(--accent-gradient);
           color: white;
           border: none;
           border-radius: 14px;
-          padding: 14px;
-          font-size: 0.95rem;
-          font-weight: 700;
+          padding: 16px;
+          font-size: 1rem;
+          font-weight: 800;
           display: flex;
           align-items: center;
           justify-content: center;

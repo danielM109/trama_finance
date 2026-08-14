@@ -23,15 +23,20 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
   const [newCatName, setNewCatName] = useState('');
 
   const backdropRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (isOpen) {
+      const originalStyle = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
       if (backdropRef.current) backdropRef.current.scrollTop = 0;
-      if (formRef.current) formRef.current.scrollTop = 0;
       if (categories.length > 0 && !category) {
         setCategory(categories[0]);
       }
+
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
     }
   }, [isOpen, categories, category]);
 
@@ -104,7 +109,7 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
           </button>
         </div>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="modal-form">
+        <form onSubmit={handleSubmit} className="modal-form">
           {/* Type Segmented Control */}
           <div className="segmented-control">
             <button
@@ -248,6 +253,7 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
           bottom: 0;
           width: 100vw;
           height: 100vh;
+          height: 100dvh;
           background: rgba(11, 15, 25, 0.88);
           backdrop-filter: blur(14px);
           -webkit-backdrop-filter: blur(14px);
@@ -255,32 +261,36 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
           display: flex;
           align-items: flex-start;
           justify-content: center;
-          padding: 16px;
+          padding: 12px 12px 80px 12px;
           overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
         }
 
         .modal-content {
           width: 100%;
           max-width: 480px;
-          max-height: calc(100vh - 32px);
-          margin: auto;
+          margin: 12px auto 40px auto;
           display: flex;
           flex-direction: column;
           background: #161E31;
           border: 1px solid rgba(255, 255, 255, 0.16);
           border-radius: 24px;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
-          overflow: hidden;
+          position: relative;
         }
 
         .modal-header {
+          position: sticky;
+          top: 0;
+          z-index: 10;
           display: flex;
           justify-content: space-between;
           align-items: center;
           padding: 18px 20px;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
           background: #161E31;
-          flex-shrink: 0;
+          border-top-left-radius: 24px;
+          border-top-right-radius: 24px;
         }
 
         .modal-title {
@@ -301,12 +311,11 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
         }
 
         .modal-form {
-          flex: 1;
-          overflow-y: auto;
           padding: 20px;
           display: flex;
           flex-direction: column;
           gap: 16px;
+          padding-bottom: 32px;
         }
 
         .segmented-control {
@@ -371,7 +380,6 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
         .inline-cat-input {
           flex: 1;
           padding: 10px 12px;
-          font-size: 0.85rem;
         }
 
         .save-cat-btn {
@@ -446,7 +454,7 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
           border-radius: 12px;
           padding: 12px 14px;
           color: #F8FAFC;
-          font-size: 0.88rem;
+          font-size: 16px; /* Prevents iOS auto-zoom */
           outline: none;
           font-family: inherit;
         }
@@ -457,14 +465,14 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
         }
 
         .submit-btn {
-          margin-top: 8px;
+          margin-top: 12px;
           background: var(--accent-gradient);
           color: white;
           border: none;
           border-radius: 14px;
-          padding: 14px;
-          font-size: 0.95rem;
-          font-weight: 700;
+          padding: 16px;
+          font-size: 1rem;
+          font-weight: 800;
           display: flex;
           align-items: center;
           justify-content: center;

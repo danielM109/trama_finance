@@ -82,7 +82,7 @@ export const ClientServicesView: React.FC = () => {
           <p className="page-subtitle">Seguimiento por estado de servicio y cobros</p>
         </div>
         <button className="add-btn-primary" onClick={handleOpenAddModal}>
-          <Plus size={16} /> Nueva Clienta
+          <Plus size={16} />Clienta
         </button>
       </div>
 
@@ -167,7 +167,7 @@ export const ClientServicesView: React.FC = () => {
 
                 {/* Interactive Status Changer Action Bar */}
                 <div className="srv-actions-bar">
-                  <span className="action-label">Estado de Pago:</span>
+                  <span className="action-label">Estado Pago:</span>
                   <div className="status-buttons">
                     <button
                       className={`status-btn ${client.paymentStatus === 'Sin Pago' ? 'active-sp' : ''}`}
@@ -238,7 +238,7 @@ export const ClientServicesView: React.FC = () => {
 
       <style>{`
         .services-container {
-          padding: 16px;
+          padding: 12px;
           display: flex;
           flex-direction: column;
           gap: 16px;
