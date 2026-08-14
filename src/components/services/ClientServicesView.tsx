@@ -4,6 +4,14 @@ import { Users, Plus, AlertCircle, Trash2, Calendar, DollarSign, Clock, MapPin, 
 import { AddServiceModal } from './AddServiceModal';
 import { ClientService, PaymentStatus, ServiceStatus } from '../../types';
 
+function getClientDateTime(client: ClientService): Date {
+  if (!client.nextDate) return new Date(0);
+  const [year, month, day] = client.nextDate.split('-').map(Number);
+  const h = client.hora ? parseInt(client.hora, 10) : 0;
+  const m = client.minuto ? parseInt(client.minuto, 10) : 0;
+  return new Date(year, (month || 1) - 1, day || 1, isNaN(h) ? 0 : h, isNaN(m) ? 0 : m, 0, 0);
+}
+
 export const ClientServicesView: React.FC = () => {
   const { clients, updateClient, deleteClient, formatCurrency } = useFinance();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,23 +24,33 @@ export const ClientServicesView: React.FC = () => {
   }, 0);
   const totalPending = totalAgreed - totalCollected;
 
-  const serviceOrder: Record<string, number> = {
-    "En Proceso": 1,
-    "Por Empezar": 2,
-    "Completado": 3,
-    "Cancelado": 4,
-  };
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
 
   const visibleClients = [...clients]
     .filter(client => !client.archived)
     .sort((a, b) => {
-      const serviceCompare =
-        (serviceOrder[a.serviceStatus] ?? 99) -
-        (serviceOrder[b.serviceStatus] ?? 99);
+      const aDateTime = getClientDateTime(a);
+      const bDateTime = getClientDateTime(b);
 
-      if (serviceCompare !== 0) return serviceCompare;
+      const aDateOnly = new Date(aDateTime.getFullYear(), aDateTime.getMonth(), aDateTime.getDate()).getTime();
+      const bDateOnly = new Date(bDateTime.getFullYear(), bDateTime.getMonth(), bDateTime.getDate()).getTime();
 
-      return new Date(a.nextDate).getTime() - new Date(b.nextDate).getTime();
+      const aIsPastDay = aDateOnly < todayStart.getTime();
+      const bIsPastDay = bDateOnly < todayStart.getTime();
+
+      // Group 1: Hoy o Futuro (aIsPastDay === false)
+      // Group 2: Días Pasados (aIsPastDay === true)
+      if (!aIsPastDay && bIsPastDay) return -1;
+      if (aIsPastDay && !bIsPastDay) return 1;
+
+      // Ambos en Grupo 1 (Hoy o Futuro): Ordenar por la más próxima (Ascendente)
+      if (!aIsPastDay && !bIsPastDay) {
+        return aDateTime.getTime() - bDateTime.getTime();
+      }
+
+      // Ambos en Grupo 2 (Días Pasados): Ordenar de la más reciente a la más antigua (Descendente)
+      return bDateTime.getTime() - aDateTime.getTime();
     });
 
   const getPaymentBadge = (status: PaymentStatus) => {
@@ -79,10 +97,10 @@ export const ClientServicesView: React.FC = () => {
       <div className="srv-header-actions">
         <div>
           <h2 className="page-title">Gestión de Clientas</h2>
-          <p className="page-subtitle">Seguimiento por estado de servicio y cobros</p>
+          <p className="page-subtitle">Ordenado por fecha y horario de atención</p>
         </div>
         <button className="add-btn-primary" onClick={handleOpenAddModal}>
-          <Plus size={16} />Clienta
+          <Plus size={16} /> Clienta
         </button>
       </div>
 
