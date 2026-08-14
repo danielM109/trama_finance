@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { CreditCard, Edit3, Target } from 'lucide-react';
+import { CreditCard, Edit3, Target, Plus } from 'lucide-react';
 
 export const AccountsView: React.FC = () => {
   const { accounts, updateAccountBalance, addAccount, budgets, transactions, formatCurrency } = useFinance();
@@ -56,7 +56,7 @@ export const AccountsView: React.FC = () => {
           <p className="page-subtitle">Saldos bancarios, tarjetas y fondos</p>
         </div>
         <button className="add-btn-primary" onClick={() => setShowAddAcc(!showAddAcc)}>
-          {showAddAcc ? 'Cerrar' : 'Nueva Cuenta'}
+          <Plus size={16} /> {showAddAcc ? 'Cerrar Formulario' : 'Nueva Cuenta'}
         </button>
       </div>
 
@@ -92,14 +92,17 @@ export const AccountsView: React.FC = () => {
               placeholder="Saldo Inicial ($ CLP)"
               value={accBalance}
               onChange={e => setAccBalance(e.target.value)}
-              className="std-input"
+              className="std-input flex-1"
             />
-            <input
-              type="color"
-              value={accColor}
-              onChange={e => setAccColor(e.target.value)}
-              className="color-picker-input"
-            />
+            <div className="color-picker-wrapper">
+              <label className="color-label">Color:</label>
+              <input
+                type="color"
+                value={accColor}
+                onChange={e => setAccColor(e.target.value)}
+                className="color-picker-input"
+              />
+            </div>
           </div>
           <button type="submit" className="save-acc-btn">
             Guardar Cuenta
@@ -107,7 +110,7 @@ export const AccountsView: React.FC = () => {
         </form>
       )}
 
-      {/* Estimated vs Actual Expense Budget Widget (Matching Page 1 of Excel PDF) */}
+      {/* Estimated vs Actual Expense Budget Widget */}
       <div className="glass-card budget-widget">
         <div className="budget-top">
           <div className="budget-title-area">
@@ -211,19 +214,29 @@ export const AccountsView: React.FC = () => {
           justify-content: space-between;
         }
 
+        .page-subtitle {
+          font-size: 0.72rem;
+          color: #94A3B8;
+        }
+
         .add-btn-primary {
           background: var(--accent-gradient);
           color: white;
           border: none;
-          padding: 8px 6px;
-          border-radius: 12px;
-          font-size: 0.82rem;
-          font-weight: 700;
+          padding: 9px 16px;
+          border-radius: 14px;
+          font-size: 0.85rem;
+          font-weight: 800;
           display: flex;
           align-items: center;
           gap: 6px;
           cursor: pointer;
-          box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+          box-shadow: 0 4px 18px rgba(99, 102, 241, 0.45);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .add-btn-primary:active {
+          transform: scale(0.96);
         }
 
         .new-acc-form {
@@ -241,13 +254,34 @@ export const AccountsView: React.FC = () => {
         .form-row {
           display: flex;
           gap: 8px;
+          align-items: center;
+        }
+
+        .flex-1 {
+          flex: 1;
+        }
+
+        .color-picker-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: rgba(30, 41, 59, 0.8);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 12px;
+          padding: 6px 12px;
+        }
+
+        .color-label {
+          font-size: 0.75rem;
+          color: #94A3B8;
+          font-weight: 600;
         }
 
         .color-picker-input {
-          width: 44px;
-          height: 44px;
-          border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          border: none;
           background: transparent;
           cursor: pointer;
         }
@@ -256,11 +290,12 @@ export const AccountsView: React.FC = () => {
           background: var(--accent-gradient);
           color: white;
           border: none;
-          padding: 10px;
-          border-radius: 10px;
+          padding: 12px;
+          border-radius: 12px;
           font-weight: 700;
-          font-size: 0.85rem;
+          font-size: 0.88rem;
           cursor: pointer;
+          box-shadow: var(--shadow-glow);
         }
 
         .budget-widget {

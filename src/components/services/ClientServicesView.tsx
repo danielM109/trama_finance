@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { Users, Plus, AlertCircle, Trash2, Calendar, DollarSign } from 'lucide-react';
+import { Users, Plus, AlertCircle, Trash2, Calendar, DollarSign, Clock, MapPin, FileText, Edit3 } from 'lucide-react';
 import { AddServiceModal } from './AddServiceModal';
-import { PaymentStatus, ServiceStatus } from '../../types';
+import { ClientService, PaymentStatus, ServiceStatus } from '../../types';
 
 export const ClientServicesView: React.FC = () => {
   const { clients, updateClient, deleteClient, formatCurrency } = useFinance();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<ClientService | null>(null);
 
   const totalAgreed = clients.reduce((sum, client) => sum + client.agreedPrice, 0);
   const totalCollected = clients.reduce((sum, client) => {
@@ -18,58 +19,59 @@ export const ClientServicesView: React.FC = () => {
   const serviceOrder: Record<string, number> = {
     "En Proceso": 1,
     "Por Empezar": 2,
-    "Finalizado": 3,
+    "Completado": 3,
+    "Cancelado": 4,
   };
 
-  const paymentOrder: Record<string, number> = {
-    "Pendiente": 1,
-    "Abono": 2,
-    "Pagado": 3,
-  };
-
-  const visibleClients = clients
+  const visibleClients = [...clients]
     .filter(client => !client.archived)
     .sort((a, b) => {
-      const dateCompare =
-        new Date(a.nextDate).getTime() - new Date(b.nextDate).getTime();
-
-      if (dateCompare !== 0) return dateCompare;
-
       const serviceCompare =
-        (serviceOrder[a.serviceStatus] ?? Number.MAX_SAFE_INTEGER) -
-        (serviceOrder[b.serviceStatus] ?? Number.MAX_SAFE_INTEGER);
+        (serviceOrder[a.serviceStatus] ?? 99) -
+        (serviceOrder[b.serviceStatus] ?? 99);
 
       if (serviceCompare !== 0) return serviceCompare;
 
-      return (
-        (paymentOrder[a.paymentStatus] ?? Number.MAX_SAFE_INTEGER) -
-        (paymentOrder[b.paymentStatus] ?? Number.MAX_SAFE_INTEGER)
-      );
+      return new Date(a.nextDate).getTime() - new Date(b.nextDate).getTime();
     });
-  
 
   const getPaymentBadge = (status: PaymentStatus) => {
     switch (status) {
       case 'Pagado':
-        return <span className="badge badge-income">✓ Pagado</span>;
+        return <span className="badge badge-income badge-subtle">✓ Pagado</span>;
       case 'Abono':
-        return <span className="badge badge-info">⏳ Abono</span>;
+        return <span className="badge badge-info badge-subtle">⏳ Abono</span>;
       case 'Sin Pago':
-        return <span className="badge badge-expense">⚠ Sin Pago</span>;
+        return <span className="badge badge-expense badge-subtle">⚠ Sin Pago</span>;
     }
   };
 
   const getServiceBadge = (status: ServiceStatus) => {
     switch (status) {
-      case 'Completado':
-        return <span className="service-tag status-done">Completado</span>;
       case 'En Proceso':
-        return <span className="service-tag status-progress">En Proceso</span>;
+        return <span className="service-tag status-progress">⚡ En Proceso</span>;
       case 'Por Empezar':
-        return <span className="service-tag status-pending">Por Empezar</span>;
+        return <span className="service-tag status-pending">📅 Por Empezar</span>;
+      case 'Completado':
+        return <span className="service-tag status-done">✓ Completado</span>;
       case 'Cancelado':
-        return <span className="service-tag status-cancelled">Cancelado</span>;
+        return <span className="service-tag status-cancelled">✕ Cancelado</span>;
     }
+  };
+
+  const handleOpenAddModal = () => {
+    setEditingClient(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (client: ClientService) => {
+    setEditingClient(client);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingClient(null);
   };
 
   return (
@@ -77,10 +79,10 @@ export const ClientServicesView: React.FC = () => {
       <div className="srv-header-actions">
         <div>
           <h2 className="page-title">Gestión de Clientas</h2>
-          <p className="page-subtitle">Seguimiento de trabajos y cobros</p>
+          <p className="page-subtitle">Seguimiento por estado de servicio y cobros</p>
         </div>
-        <button className="add-btn-primary" onClick={() => setIsModalOpen(true)}>
-          <Plus size={16} />Clienta
+        <button className="add-btn-primary" onClick={handleOpenAddModal}>
+          <Plus size={16} /> Nueva Clienta
         </button>
       </div>
 
@@ -112,7 +114,7 @@ export const ClientServicesView: React.FC = () => {
                 <div className="srv-card-top">
                   <div className="client-meta">
                     <div className="client-avatar">
-                      <Users size={18} color="#818CF8" />
+                      <Users size={20} color="#818CF8" />
                     </div>
                     <div>
                       <h3 className="client-name">{client.clientName}</h3>
@@ -135,7 +137,26 @@ export const ClientServicesView: React.FC = () => {
                     <Calendar size={14} color="#94A3B8" />
                     <span>Próx. Cita: {client.nextDate}</span>
                   </div>
+                  {(client.hora || client.minuto) && (
+                    <div className="detail-item">
+                      <Clock size={14} color="#94A3B8" />
+                      <span>{client.hora ? `${client.hora}:${client.minuto || '00'} hrs` : `${client.minuto} min`}</span>
+                    </div>
+                  )}
+                  {client.ciudad && (
+                    <div className="detail-item">
+                      <MapPin size={14} color="#94A3B8" />
+                      <span>{client.ciudad}</span>
+                    </div>
+                  )}
                 </div>
+
+                {client.notes && (
+                  <div className="client-notes-box">
+                    <FileText size={13} color="#94A3B8" />
+                    <span>{client.notes}</span>
+                  </div>
+                )}
 
                 {pending > 0 && (
                   <div className="pending-alert">
@@ -146,7 +167,7 @@ export const ClientServicesView: React.FC = () => {
 
                 {/* Interactive Status Changer Action Bar */}
                 <div className="srv-actions-bar">
-                  <span className="action-label">Cambiar pago:</span>
+                  <span className="action-label">Estado de Pago:</span>
                   <div className="status-buttons">
                     <button
                       className={`status-btn ${client.paymentStatus === 'Sin Pago' ? 'active-sp' : ''}`}
@@ -176,16 +197,27 @@ export const ClientServicesView: React.FC = () => {
                     </button>
                   </div>
 
-                  <button
-                    className="srv-delete-btn"
-                    onClick={() => {
-                      if (window.confirm(`¿Eliminar registro de ${client.clientName}?`)) {
-                        deleteClient(client.id);
-                      }
-                    }}
-                  >
-                    <Trash2 size={15} color="#94A3B8" />
-                  </button>
+                  <div className="card-right-actions">
+                    <button
+                      className="srv-icon-btn edit-btn"
+                      title="Editar registro de clienta"
+                      onClick={() => handleOpenEditModal(client)}
+                    >
+                      <Edit3 size={15} color="#818CF8" />
+                    </button>
+
+                    <button
+                      className="srv-icon-btn delete-btn"
+                      title="Eliminar registro"
+                      onClick={() => {
+                        if (window.confirm(`¿Eliminar registro de ${client.clientName}?`)) {
+                          deleteClient(client.id);
+                        }
+                      }}
+                    >
+                      <Trash2 size={15} color="#94A3B8" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -197,8 +229,12 @@ export const ClientServicesView: React.FC = () => {
         )}
       </div>
 
-      {/* Add Client Service Modal */}
-      <AddServiceModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      {/* Add / Edit Client Service Modal */}
+      <AddServiceModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        clientToEdit={editingClient}
+      />
 
       <style>{`
         .services-container {
@@ -224,15 +260,20 @@ export const ClientServicesView: React.FC = () => {
           background: var(--accent-gradient);
           color: white;
           border: none;
-          padding: 8px 14px;
-          border-radius: 12px;
-          font-size: 0.82rem;
-          font-weight: 700;
+          padding: 9px 16px;
+          border-radius: 14px;
+          font-size: 0.85rem;
+          font-weight: 800;
           display: flex;
           align-items: center;
           gap: 6px;
           cursor: pointer;
-          box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+          box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4);
+          transition: transform 0.2s ease;
+        }
+
+        .add-btn-primary:active {
+          transform: scale(0.96);
         }
 
         .srv-kpi-grid {
@@ -284,27 +325,28 @@ export const ClientServicesView: React.FC = () => {
         .client-meta {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
         }
 
         .client-avatar {
-          width: 38px;
-          height: 38px;
-          border-radius: 12px;
-          background: rgba(99, 102, 241, 0.15);
+          width: 42px;
+          height: 42px;
+          border-radius: 14px;
+          background: rgba(99, 102, 241, 0.18);
+          border: 1px solid rgba(99, 102, 241, 0.3);
           display: flex;
           align-items: center;
           justify-content: center;
         }
 
         .client-name {
-          font-size: 0.95rem;
-          font-weight: 700;
+          font-size: 1rem;
+          font-weight: 800;
           color: #F8FAFC;
         }
 
         .package-title {
-          font-size: 0.75rem;
+          font-size: 0.76rem;
           color: #818CF8;
           font-weight: 600;
         }
@@ -313,36 +355,49 @@ export const ClientServicesView: React.FC = () => {
           display: flex;
           flex-direction: column;
           align-items: flex-end;
-          gap: 4px;
+          gap: 6px;
         }
 
         .service-tag {
-          font-size: 0.85rem;
-          padding: 2px 8px;
-          border-radius: 6px;
-          font-weight: 600;
+          font-size: 0.78rem;
+          padding: 5px 12px;
+          border-radius: 12px;
+          font-weight: 800;
+          letter-spacing: 0.01em;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .status-done {
-          background: rgba(16, 185, 129, 0.2);
-          color: #34D399;
-        }
         .status-progress {
-          background: rgba(99, 102, 241, 0.2);
-          color: #818CF8;
+          background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%);
+          color: #A5B4FC;
+          border: 1px solid rgba(129, 140, 248, 0.4);
         }
         .status-pending {
-          background: rgba(245, 158, 11, 0.2);
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.25) 100%);
           color: #FBBF24;
+          border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+        .status-done {
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.25) 100%);
+          color: #34D399;
+          border: 1px solid rgba(16, 185, 129, 0.4);
         }
         .status-cancelled {
-          background: rgba(148, 163, 184, 0.2);
+          background: rgba(148, 163, 184, 0.15);
           color: #94A3B8;
+          border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .badge-subtle {
+          font-size: 0.68rem;
+          padding: 2px 8px;
+          opacity: 0.85;
         }
 
         .srv-details {
           display: flex;
-          gap: 16px;
+          flex-wrap: wrap;
+          gap: 12px;
           background: rgba(15, 23, 42, 0.4);
           padding: 8px 12px;
           border-radius: 10px;
@@ -354,6 +409,18 @@ export const ClientServicesView: React.FC = () => {
           display: flex;
           align-items: center;
           gap: 4px;
+        }
+
+        .client-notes-box {
+          display: flex;
+          align-items: flex-start;
+          gap: 6px;
+          font-size: 0.76rem;
+          color: #CBD5E1;
+          background: rgba(30, 41, 59, 0.5);
+          padding: 8px 12px;
+          border-radius: 8px;
+          border-left: 3px solid #818CF8;
         }
 
         .pending-alert {
@@ -413,11 +480,32 @@ export const ClientServicesView: React.FC = () => {
           border-color: rgba(16, 185, 129, 0.4);
         }
 
-        .srv-delete-btn {
-          background: none;
-          border: none;
+        .card-right-actions {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .srv-icon-btn {
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 8px;
+          padding: 5px;
           cursor: pointer;
-          padding: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.2s;
+        }
+
+        .srv-icon-btn:hover {
+          background: rgba(255, 255, 255, 0.12);
+        }
+
+        .empty-state {
+          text-align: center;
+          padding: 24px;
+          color: #94A3B8;
         }
       `}</style>
     </div>

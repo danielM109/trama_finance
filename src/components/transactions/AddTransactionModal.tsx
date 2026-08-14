@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { useFinance } from '../../context/FinanceContext';
-import { X, Check } from 'lucide-react';
+import { X, Check, Trash2 } from 'lucide-react';
 import { TransactionType } from '../../types';
 
 interface ModalProps {
@@ -9,30 +10,59 @@ interface ModalProps {
 }
 
 export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
-  const { addTransaction, accounts } = useFinance();
+  const { addTransaction, accounts, categories, addCategory, deleteCategory } = useFinance();
 
   const [type, setType] = useState<TransactionType>('Gasto');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Gasto Oeracional');
+  const [category, setCategory] = useState(categories[0] || 'Gasto Operacional');
   const [account, setAccount] = useState(accounts[0]?.name || 'CC Catalina');
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
 
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (backdropRef.current) backdropRef.current.scrollTop = 0;
+      if (formRef.current) formRef.current.scrollTop = 0;
+      if (categories.length > 0 && !category) {
+        setCategory(categories[0]);
+      }
+    }
+  }, [isOpen, categories, category]);
+
   if (!isOpen) return null;
 
-  const categories = [
-    'Venta',
-    'Gasto Oeracional',
-    'Publicidad',
-    'Materiales',
-    'Entrenamiento',
-    'Transporte',
-    'Inversión Inicial',
-    'Otros'
-  ];
+  const handleAddCat = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (newCatName.trim()) {
+      addCategory(newCatName.trim());
+      setCategory(newCatName.trim());
+      setNewCatName('');
+      setShowAddCategory(false);
+    }
+  };
+
+  const handleDeleteCat = (e: React.MouseEvent, catToDelete: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (categories.length <= 1) {
+      alert('Debes tener al menos una categoría.');
+      return;
+    }
+    if (window.confirm(`¿Eliminar la categoría "${catToDelete}"?`)) {
+      deleteCategory(catToDelete);
+      if (category === catToDelete) {
+        setCategory(categories.find(c => c !== catToDelete) || '');
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  // const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const numAmount = parseFloat(amount);
     if (!description.trim() || isNaN(numAmount) || numAmount <= 0) {
@@ -45,38 +75,36 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
 
     try {
       await addTransaction({
-      // addTransaction({
         type,
         description: description.trim(),
         amount: numAmount,
-        category,
-        account,
+        category: category || categories[0] || 'Otros',
+        account: account || (accounts[0]?.name || 'Efectivo'),
         date,
         year,
         month: months[month - 1]
       });
 
-      setDescription("");
-      setAmount("");
+      setDescription('');
+      setAmount('');
       onClose();
-
     } catch (err) {
       console.error(err);
-      alert("No fue posible guardar la transacción.");
-    };
+      alert('No fue posible guardar la transacción.');
+    }
   };
 
-  return (
-    <div className="modal-backdrop">
-      <div className="modal-content glass-card">
+  const modalJSX = (
+    <div ref={backdropRef} className="modal-backdrop" onClick={onClose}>
+      <div className="modal-content glass-card" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3 className="modal-title">Nuevo Registro</h3>
-          <button className="close-btn" onClick={onClose}>
+          <button className="close-btn" onClick={onClose} type="button">
             <X size={20} color="#94A3B8" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="modal-form">
+        <form ref={formRef} onSubmit={handleSubmit} className="modal-form">
           {/* Type Segmented Control */}
           <div className="segmented-control">
             <button
@@ -107,7 +135,6 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
                 onChange={e => setAmount(e.target.value)}
                 className="amount-input"
                 required
-                autoFocus
               />
             </div>
           </div>
@@ -125,20 +152,57 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
             />
           </div>
 
-          {/* Category Dropdown */}
+          {/* Category Dropdown & Actions */}
           <div className="form-group">
-            <label className="input-label">Categoría</label>
-            <select
-              value={category}
-              onChange={e => setCategory(e.target.value)}
-              className="std-select"
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+            <div className="label-with-action">
+              <label className="input-label">Categoría</label>
+              <button
+                type="button"
+                className="text-action-btn"
+                onClick={() => setShowAddCategory(!showAddCategory)}
+              >
+                {showAddCategory ? 'Cancelar' : '+ Nueva Categoría'}
+              </button>
+            </div>
+
+            {showAddCategory ? (
+              <div className="add-cat-row">
+                <input
+                  type="text"
+                  placeholder="Nombre de nueva categoría"
+                  value={newCatName}
+                  onChange={e => setNewCatName(e.target.value)}
+                  className="std-input inline-cat-input"
+                />
+                <button type="button" className="save-cat-btn" onClick={handleAddCat}>
+                  Guardar
+                </button>
+              </div>
+            ) : (
+              <div className="select-with-delete">
+                <select
+                  value={category}
+                  onChange={e => setCategory(e.target.value)}
+                  className="std-select flex-1"
+                >
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+                {category && (
+                  <button
+                    type="button"
+                    className="del-cat-icon-btn"
+                    onClick={e => handleDeleteCat(e, category)}
+                    title={`Eliminar categoría ${category}`}
+                  >
+                    <Trash2 size={16} color="#F43F5E" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Account Dropdown */}
@@ -182,41 +246,41 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.75);
-          backdrop-filter: blur(8px);
-          z-index: 100;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(11, 15, 25, 0.88);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          z-index: 999999;
           display: flex;
-          align-items: flex-end;
+          align-items: flex-start;
           justify-content: center;
-        }
-
-        @media (min-width: 640px) {
-          .modal-backdrop {
-            align-items: center;
-          }
+          padding: 16px;
+          overflow-y: auto;
         }
 
         .modal-content {
           width: 100%;
           max-width: 480px;
-          border-bottom-left-radius: 0;
-          border-bottom-right-radius: 0;
+          max-height: calc(100vh - 32px);
+          margin: auto;
+          display: flex;
+          flex-direction: column;
           background: #161E31;
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          padding: 20px 24px 28px 24px;
-        }
-
-        @media (min-width: 640px) {
-          .modal-content {
-            border-radius: var(--radius-xl);
-          }
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          border-radius: 24px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+          overflow: hidden;
         }
 
         .modal-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 18px;
+          padding: 18px 20px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          background: #161E31;
+          flex-shrink: 0;
         }
 
         .modal-title {
@@ -230,9 +294,16 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
           border: none;
           cursor: pointer;
           padding: 4px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .modal-form {
+          flex: 1;
+          overflow-y: auto;
+          padding: 20px;
           display: flex;
           flex-direction: column;
           gap: 16px;
@@ -275,6 +346,64 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
           display: flex;
           flex-direction: column;
           gap: 6px;
+        }
+
+        .label-with-action {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .text-action-btn {
+          background: none;
+          border: none;
+          color: #818CF8;
+          font-size: 0.72rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .add-cat-row {
+          display: flex;
+          gap: 8px;
+        }
+
+        .inline-cat-input {
+          flex: 1;
+          padding: 10px 12px;
+          font-size: 0.85rem;
+        }
+
+        .save-cat-btn {
+          background: var(--accent-gradient);
+          color: white;
+          border: none;
+          padding: 0 14px;
+          border-radius: 10px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .select-with-delete {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+
+        .flex-1 {
+          flex: 1;
+        }
+
+        .del-cat-icon-btn {
+          background: rgba(244, 63, 94, 0.12);
+          border: 1px solid rgba(244, 63, 94, 0.25);
+          border-radius: 10px;
+          padding: 10px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .input-label {
@@ -351,4 +480,6 @@ export const AddTransactionModal: React.FC<ModalProps> = ({ isOpen, onClose }) =
       `}</style>
     </div>
   );
+
+  return ReactDOM.createPortal(modalJSX, document.body);
 };

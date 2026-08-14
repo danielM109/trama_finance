@@ -13,7 +13,10 @@ function toServiceModel(row: any): ClientService {
     amountPaid: Number(row.amountPaid ?? row.amount_paid ?? row.monto_pagado ?? 0),
     nextDate: row.nextDate ?? row.next_date ?? row.proxima_fecha ?? '',
     serviceStatus: (row.serviceStatus ?? row.service_status ?? row.estado_servicio ?? 'En Proceso') as ClientService['serviceStatus'],
-    notes: row.notes ?? row.observaciones ?? '',
+    hora: row.hora != null ? String(row.hora) : undefined,
+    minuto: row.minuto != null ? String(row.minuto) : undefined,
+    ciudad: row.ciudad != null ? String(row.ciudad) : undefined,
+    notes: row.notes ?? row.observaciones ?? undefined,
     archived: Boolean(row.archived ?? row.archivado ?? false),
   };
 }
@@ -28,6 +31,9 @@ function toPayload(service: Partial<ClientService>) {
   if (service.amountPaid !== undefined) payload.amountPaid = service.amountPaid;
   if (service.nextDate !== undefined) payload.nextDate = service.nextDate;
   if (service.serviceStatus !== undefined) payload.serviceStatus = service.serviceStatus;
+  if (service.hora !== undefined) payload.hora = service.hora;
+  if (service.minuto !== undefined) payload.minuto = service.minuto;
+  if (service.ciudad !== undefined) payload.ciudad = service.ciudad;
   if (service.notes !== undefined) payload.notes = service.notes;
   if (service.archived !== undefined) payload.archived = service.archived;
 
@@ -63,7 +69,7 @@ export async function createClient(service: Omit<ClientService, 'id'>) {
   return (data ?? []).map(toServiceModel);
 }
 
-export async function updateClient(id:number, updates: Partial<ClientService>) {
+export async function updateClient(id: number, updates: Partial<ClientService>) {
   const payload = toPayload(updates);
 
   const { data, error } = await supabase

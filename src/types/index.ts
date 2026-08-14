@@ -32,6 +32,9 @@ export interface ClientService {
   nextDate: string;
   serviceStatus: ServiceStatus;
   amountPaid?: number;
+  hora?: string;
+  minuto?: string;
+  ciudad?: string;
   notes?: string;
   archived: boolean;
 }
